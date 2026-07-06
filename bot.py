@@ -1,9 +1,3 @@
-"""
-Language70 Translator Bot
-A Telegram bot that translates text and voice messages into 70+ languages
-Deployed on Railway with GitHub integration
-"""
-
 import os
 import logging
 import tempfile
@@ -20,15 +14,11 @@ from telegram.ext import (
 from googletrans import Translator
 import speech_recognition as sr
 from pydub import AudioSegment
-import subprocess
 
-# ============================================
-# CONFIGURATION
-# ============================================
-
+# Configuration
 TOKEN = os.environ.get("TELEGRAM_TOKEN")
 if not TOKEN:
-    raise ValueError("❌ TELEGRAM_TOKEN environment variable is not set!")
+    raise ValueError("TELEGRAM_TOKEN environment variable is not set!")
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -57,12 +47,7 @@ LANGUAGE_MAP = {
     "khmer": "km", "lao": "lo", "burmese": "my", "amharic": "am",
     "swahili": "sw", "zulu": "zu", "hausa": "ha", "yoruba": "yo",
     "igbo": "ig", "tamil": "ta", "telugu": "te", "marathi": "mr",
-    "gujarati": "gu", "kannada": "kn", "malayalam": "ml", "punjabi": "pa",
-    "sanskrit": "sa", "somali": "so", "kurdish": "ku", "pashto": "ps",
-    "dari": "prs", "tajik": "tg", "kyrgyz": "ky", "turkmen": "tk",
-    "maltese": "mt", "irish": "ga", "scottish": "gd", "welsh": "cy",
-    "basque": "eu", "catalan": "ca", "galician": "gl", "latin": "la",
-    "esperanto": "eo"
+    "gujarati": "gu", "kannada": "kn", "malayalam": "ml", "punjabi": "pa"
 }
 
 POPULAR_LANGUAGES = [
@@ -70,10 +55,6 @@ POPULAR_LANGUAGES = [
     "chinese", "japanese", "arabic", "russian", 
     "hindi", "portuguese", "italian", "korean"
 ]
-
-# ============================================
-# HELPER FUNCTIONS
-# ============================================
 
 def get_user_language(user_id: int) -> str:
     return user_languages.get(user_id, "english")
@@ -86,80 +67,24 @@ def set_user_language(user_id: int, language: str) -> None:
 def get_language_code(language_name: str) -> str:
     return LANGUAGE_MAP.get(language_name.lower(), "en")
 
-# ============================================
-# COMMAND HANDLERS
-# ============================================
-
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
-    welcome_message = f"""
-👋 *Welcome to Language70 Translator, {user.first_name}!*
-
-I can translate text and voice messages into *70+ languages*.
-
-📝 *Commands:*
-/start - Welcome message
-/help - Help menu
-/setlang - Choose target language
-/langlist - See all 70+ languages
-/about - About this bot
-/tl - Translate replied message
-
-💡 *Default language is English.*
-Send any text or voice message to translate!
-"""
-    await update.message.reply_text(welcome_message, parse_mode="Markdown")
+    await update.message.reply_text(
+        f"👋 Welcome to Language70 Translator, {user.first_name}!\n\n"
+        "Send any text or voice message to translate!\n"
+        "Use /setlang to change your target language.\n"
+        "Use /help for more commands."
+    )
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    help_text = """
-📖 *Help Guide*
-
-• Send any *text message* → Auto-translate
-• Send a *voice message* → Transcribe & translate
-• Reply with `/tl` → Translate replied message
-
-⚙️ *Commands:*
-/setlang - Change target language
-/langlist - List all languages
-/about - Bot info
-"""
-    await update.message.reply_text(help_text, parse_mode="Markdown")
-
-async def about_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    about_text = """
-🤖 *Language70 Translator Bot*
-
-🌍 *Version:* 2.0.0
-🎯 *Languages:* 70+
-
-✨ *Features:*
-• Real-time text translation
-• Voice message transcription
-• User language preferences
-• Reply translation support
-
-🛠️ *Built with:*
-• Python 3.11
-• Google Translate API
-• Speech Recognition
-• Railway
-
-📌 *Bot:* @language70translator
-"""
-    await update.message.reply_text(about_text, parse_mode="Markdown")
-
-async def langlist_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    languages = sorted(LANGUAGE_MAP.keys())
-    chunks = [languages[i:i+25] for i in range(0, len(languages), 25)]
-    
-    message = "🌍 *All Supported Languages (70+)*\n\n"
-    for lang in chunks[0]:
-        message += f"• {lang.capitalize()}\n"
-    
-    if len(chunks) > 1:
-        message += f"\n_+{sum(len(chunk) for chunk in chunks[1:])} more languages_"
-    
-    await update.message.reply_text(message, parse_mode="Markdown")
+    await update.message.reply_text(
+        "📖 Help Guide\n\n"
+        "• Send text → Auto-translate\n"
+        "• Send voice → Transcribe & translate\n"
+        "• /setlang → Change language\n"
+        "• /langlist → All languages\n"
+        "• /tl (reply) → Translate replied message"
+    )
 
 async def setlang_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     keyboard = []
@@ -172,14 +97,13 @@ async def setlang_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if row:
         keyboard.append(row)
     
-    keyboard.append([InlineKeyboardButton("📋 View All Languages", callback_data="view_all")])
+    keyboard.append([InlineKeyboardButton("📋 View All", callback_data="view_all")])
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     current = get_user_language(update.effective_user.id)
     await update.message.reply_text(
-        f"🌍 Current language: *{current.capitalize()}*\n\nSelect your target language:",
-        reply_markup=reply_markup,
-        parse_mode="Markdown"
+        f"🌍 Current: {current.capitalize()}\nSelect target:",
+        reply_markup=reply_markup
     )
 
 async def language_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -191,15 +115,11 @@ async def language_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     
     if action == "view_all":
         languages = sorted(LANGUAGE_MAP.keys())
-        keyboard = []
-        for lang in languages[:50]:
-            keyboard.append([InlineKeyboardButton(lang.capitalize(), callback_data=f"lang_{lang}")])
+        keyboard = [[InlineKeyboardButton(lang.capitalize(), callback_data=f"lang_{lang}")] for lang in languages[:50]]
         keyboard.append([InlineKeyboardButton("🔙 Back", callback_data="back")])
-        
         await query.edit_message_text(
-            "🌍 *Select Your Target Language:*",
-            reply_markup=InlineKeyboardMarkup(keyboard),
-            parse_mode="Markdown"
+            "🌍 Select language:",
+            reply_markup=InlineKeyboardMarkup(keyboard)
         )
         return
     
@@ -211,19 +131,23 @@ async def language_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         language = action.replace("lang_", "")
         if language in LANGUAGE_MAP:
             set_user_language(user_id, language)
-            await query.edit_message_text(
-                f"✅ *Language set to:* {language.capitalize()}\n\nSend me any text or voice message to translate!",
-                parse_mode="Markdown"
-            )
+            await query.edit_message_text(f"✅ Language set to: {language.capitalize()}")
+
+async def langlist_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    languages = sorted(LANGUAGE_MAP.keys())
+    message = "🌍 All Languages (70+):\n\n"
+    for lang in languages[:50]:
+        message += f"• {lang.capitalize()}\n"
+    await update.message.reply_text(message)
 
 async def inline_translate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.message.reply_to_message:
-        await update.message.reply_text("ℹ️ Reply to a message with /tl")
+        await update.message.reply_text("Reply to a message with /tl")
         return
     
     text = update.message.reply_to_message.text
     if not text:
-        await update.message.reply_text("❌ No text to translate")
+        await update.message.reply_text("No text to translate")
         return
     
     user_id = update.effective_user.id
@@ -233,16 +157,10 @@ async def inline_translate(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     try:
         translated = translator.translate(text, dest=target_code)
         await update.message.reply_text(
-            f"🔄 *Translated to {target_lang.capitalize()}:*\n{translated.text}",
-            parse_mode="Markdown"
+            f"🔄 Translated to {target_lang.capitalize()}:\n{translated.text}"
         )
     except Exception as e:
-        logger.error(f"Inline translation error: {e}")
-        await update.message.reply_text("❌ Translation failed")
-
-# ============================================
-# TRANSLATION HANDLERS
-# ============================================
+        await update.message.reply_text("Translation failed")
 
 async def translate_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
@@ -255,25 +173,12 @@ async def translate_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     target_code = get_language_code(target_lang)
     
     try:
-        detection = translator.detect(text)
-        source_lang = detection.lang
-        
         translated = translator.translate(text, dest=target_code)
-        
-        response = f"""
-🔄 *Translation*
-
-📤 *Original:*
-{text}
-
-📥 *Translated to {target_lang.capitalize()}:*
-{translated.text}
-"""
-        await update.message.reply_text(response, parse_mode="Markdown")
-        
+        await update.message.reply_text(
+            f"📥 {target_lang.capitalize()}: {translated.text}"
+        )
     except Exception as e:
-        logger.error(f"Translation error: {e}")
-        await update.message.reply_text("❌ Translation failed. Please try again.")
+        await update.message.reply_text("Translation failed")
 
 async def translate_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
@@ -282,109 +187,70 @@ async def translate_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if not voice:
         return
     
-    processing_msg = await update.message.reply_text("🎵 Processing voice message...")
+    processing_msg = await update.message.reply_text("🎵 Processing...")
     
     try:
         file = await context.bot.get_file(voice.file_id)
         
-        # Download as OGG
         with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as ogg_file:
             await file.download_to_drive(ogg_file.name)
             ogg_path = ogg_file.name
         
-        # Convert OGG to WAV using pydub
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as wav_file:
-            try:
-                audio = AudioSegment.from_ogg(ogg_path)
-                audio.export(wav_file.name, format="wav")
-                wav_path = wav_file.name
-            except Exception as e:
-                logger.error(f"Audio conversion error: {e}")
-                await processing_msg.edit_text("❌ Could not process voice file. Please try again.")
-                os.unlink(ogg_path)
-                return
+            audio = AudioSegment.from_ogg(ogg_path)
+            audio.export(wav_file.name, format="wav")
+            wav_path = wav_file.name
         
-        # Transcribe using SpeechRecognition
         recognizer = sr.Recognizer()
         with sr.AudioFile(wav_path) as source:
-            recognizer.adjust_for_ambient_noise(source, duration=0.5)
             audio_data = recognizer.record(source)
         
-        try:
-            text = recognizer.recognize_google(audio_data)
-        except sr.UnknownValueError:
-            await processing_msg.edit_text("❌ Could not understand the voice message. Please speak clearly and try again.")
-            os.unlink(ogg_path)
-            os.unlink(wav_path)
-            return
-        except sr.RequestError:
-            await processing_msg.edit_text("❌ Speech recognition service unavailable. Please try again later.")
-            os.unlink(ogg_path)
-            os.unlink(wav_path)
-            return
+        text = recognizer.recognize_google(audio_data)
         
-        # Clean up temp files
         os.unlink(ogg_path)
         os.unlink(wav_path)
         
-        # Translate the transcribed text
         target_lang = get_user_language(user_id)
         target_code = get_language_code(target_lang)
-        
         translated = translator.translate(text, dest=target_code)
         
-        response = f"""
-🎙️ *Voice Translation*
-
-🔊 *Transcribed:*
-{text}
-
-🌍 *Translated to {target_lang.capitalize()}:*
-{translated.text}
-"""
-        await processing_msg.edit_text(response, parse_mode="Markdown")
+        await processing_msg.edit_text(
+            f"🔊 {text}\n\n📥 {target_lang.capitalize()}: {translated.text}"
+        )
         
     except Exception as e:
-        logger.error(f"Voice translation error: {e}")
-        await processing_msg.edit_text("❌ Voice processing failed. Please try again or send text instead.")
+        await processing_msg.edit_text("Voice processing failed")
 
-# ============================================
-# ERROR HANDLER
-# ============================================
+async def about_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text(
+        "🤖 Language70 Translator\n"
+        "Version 2.0\n"
+        "Supports 70+ languages\n"
+        "Text & Voice translation"
+    )
 
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    logger.error(f"Update {update} caused error {context.error}")
+    logger.error(f"Error: {context.error}")
     try:
         if update and update.effective_message:
-            await update.effective_message.reply_text("⚠️ An error occurred. Please try again.")
-    except Exception as e:
-        logger.error(f"Error in error handler: {e}")
-
-# ============================================
-# MAIN APPLICATION
-# ============================================
+            await update.effective_message.reply_text("⚠️ Error occurred")
+    except:
+        pass
 
 def main() -> None:
-    logger.info("🚀 Starting Language70 Translator Bot...")
+    logger.info("🚀 Starting bot...")
     
     application = Application.builder().token(TOKEN).build()
     
-    # Command handlers
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("about", about_command))
     application.add_handler(CommandHandler("langlist", langlist_command))
     application.add_handler(CommandHandler("setlang", setlang_command))
     application.add_handler(CommandHandler("tl", inline_translate))
-    
-    # Callback handler
     application.add_handler(CallbackQueryHandler(language_callback, pattern="^(lang_|view_all|back)"))
-    
-    # Message handlers
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, translate_text))
     application.add_handler(MessageHandler(filters.VOICE, translate_voice))
-    
-    # Error handler
     application.add_error_handler(error_handler)
     
     logger.info("✅ Bot is running!")
