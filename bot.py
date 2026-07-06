@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 translator = Translator()
 user_languages: Dict[int, str] = {}
 
-# 70+ Language Mapping
+# Language Mapping
 LANGUAGE_MAP = {
     "english": "en", "spanish": "es", "french": "fr", "german": "de",
     "italian": "it", "portuguese": "pt", "russian": "ru", "chinese": "zh-cn",
