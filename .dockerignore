@@ -1,0 +1,17 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.env
+venv/
+.venv/
+*.ogg
+*.wav
+*.mp3
+*.m4a
+.git
+.gitignore
+README.md
+runtime.txt
+Procfile
+nixpacks.toml
