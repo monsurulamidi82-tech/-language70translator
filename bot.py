@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 translator = Translator()
 user_languages: Dict[int, str] = {}
 
-# Language Mapping
+# 70+ Languages
 LANGUAGE_MAP = {
     "english": "en", "spanish": "es", "french": "fr", "german": "de",
     "italian": "it", "portuguese": "pt", "russian": "ru", "chinese": "zh-cn",
@@ -231,14 +231,9 @@ async def about_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     logger.error(f"Error: {context.error}")
-    try:
-        if update and update.effective_message:
-            await update.effective_message.reply_text("⚠️ Error occurred")
-    except:
-        pass
 
 def main() -> None:
-    logger.info("🚀 Starting bot...")
+    logger.info("🚀 Starting Language70 Translator Bot...")
     
     application = Application.builder().token(TOKEN).build()
     
@@ -253,7 +248,7 @@ def main() -> None:
     application.add_handler(MessageHandler(filters.VOICE, translate_voice))
     application.add_error_handler(error_handler)
     
-    logger.info("✅ Bot is running!")
+    logger.info("✅ Bot is running successfully!")
     application.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
 
 if __name__ == "__main__":
