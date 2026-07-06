@@ -11,3 +11,4 @@ venv/
 *.m4a
 .DS_Store
 *.log
+runtime.txt
